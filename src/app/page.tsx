@@ -1,103 +1,169 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, FormEvent, useRef, useEffect } from 'react';
+import {
+  Container,
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Alert,
+} from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+
+// メッセージの型定義
+interface Message {
+  id: string;
+  text: string;
+  user: string;
+  timestamp: string;
+}
+
+// チャットアプリのページコンポーネント
+export default function ChatPage() { 
+  const [message, setMessage] = useState('');       // 入力フィールドのメッセージテキストを管理するstate
+  const [messages, setMessages] = useState<Message[]>([]); // チャットに表示されるすべてのメッセージのリストを管理するstate
+  const [username, setUsername] = useState<string>(''); // 現在のユーザー名を管理するstate
+
+  const messagesEndRef = useRef<HTMLDivElement>(null); // チャットリストの最下部に自動スクロールにするためのstate
+
+  useEffect(() => {
+    // localStorage はブラウザのAPIなので、クライアントサイドでのみアクセス可能
+    const storedUser = localStorage.getItem('chatUsername');
+    if (storedUser) {
+      setUsername(storedUser);
+    } else {
+      const randomName = `Guest_${Math.floor(Math.random() * 10000)}`;
+      setUsername(randomName);
+      localStorage.setItem('chatUsername', randomName);
+    }
+  }, []);
+
+  // メッセージが更新されるたびに、リストの最下部へスクロール
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // メッセージ送信時のハンドラ
+  const sendMessage = (e: FormEvent) => {
+    e.preventDefault();
+
+    if (message.trim()) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        text: message.trim(),
+        user: username,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setMessage('');
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '85vh' }}>
+        <Typography variant="h5" component="h1" gutterBottom align="center">
+          Chat App (チャットアプリ)
+        </Typography>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2">名前:</Typography>
+          <TextField
+            variant="outlined"
+            size="small"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              localStorage.setItem('chatUsername', e.target.value);
+            }}
+            sx={{ flexGrow: 1 }}
+          />
+        </Box>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            flexGrow: 1,
+            overflowY: 'auto',
+            p: 2,
+            mb: 2,
+            backgroundColor: '#e3f2fd',
+          }}
+        >
+          <List sx={{ p: 0 }}>
+            {messages.map((msg) => (
+              <ListItem
+                key={msg.id}
+                disablePadding
+                sx={{
+                  mb: 1,
+                  justifyContent: msg.user === username ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ alignSelf: msg.user === username ? 'flex-end' : 'flex-start' }}
+                      >
+                        {msg.user}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          p: 1,
+                          borderRadius: 1,
+                          maxWidth: '80%',
+                          backgroundColor: msg.user === username ? '#dcf8c6' : '#bbdefb',
+                          wordBreak: 'break-word',
+                          alignSelf: msg.user === username ? 'flex-end' : 'flex-start',
+                        }}
+                      >
+                        {msg.text}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.disabled"
+                        sx={{ alignSelf: msg.user === username ? 'flex-end' : 'flex-start', fontSize: '0.65rem' }}
+                      >
+                        {msg.timestamp}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+            ))}
+            <div ref={messagesEndRef} />
+          </List>
+        </Paper>
+
+        <Box component="form" onSubmit={sendMessage} sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="メッセージを入力してください"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            endIcon={<SendIcon />}
+            disabled={!message.trim()}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            送信
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
