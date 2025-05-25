@@ -10,18 +10,17 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
-  Alert,
+  ListItemText
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
 // メッセージの型定義
-interface Message {
-  id: string;
-  text: string;
-  user: string;
-  timestamp: string;
-}
+type Message = {
+  id: string; // 各メッセージのID
+  text: string; // メッセージの本文
+  user: string; // メッセージを送信したユーザー名
+  timestamp: string; // メッセージが送信された時刻（表示用）
+};
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() { 
@@ -159,6 +158,9 @@ export default function ChatPage() {
             color="primary"
             endIcon={<SendIcon />}
             disabled={!message.trim()}
+            sx={{
+              whiteSpace: 'nowrap', 
+            }}
           >
             送信
           </Button>
