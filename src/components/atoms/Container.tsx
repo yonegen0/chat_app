@@ -1,18 +1,18 @@
 import React from 'react';
-import MuiContainer, { ContainerProps as MuiContainerProps } from '@mui/material/Container';
+import MuiContainer from '@mui/material/Container';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomContainerProps = Omit<MuiContainerProps, 'sx'> & {
+type CustomContainerProps = {
   customBackgroundColor?: string;
 };
 
 // styled
-const StyledContainer = styled(MuiContainer)<CustomContainerProps>(({ customBackgroundColor }) => ({
-  ...(customBackgroundColor && { backgroundColor: customBackgroundColor }),
+const StyledContainer = styled(MuiContainer)<{props: CustomContainerProps}>(({ props }) => ({
+  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
 }));
 
 // コンポーネント
-export const Container: React.FC<CustomContainerProps> = (props) => {
-  return <StyledContainer {...props} />;
+export const Container = ( props: CustomContainerProps) => {
+  return <StyledContainer props={props} />;
 };

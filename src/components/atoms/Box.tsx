@@ -1,20 +1,20 @@
 import React from 'react';
-import MuiPaper, { PaperProps as MuiPaperProps } from '@mui/material/Paper';
+import MuiPaper from '@mui/material/Paper';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomPaperProps = Omit<MuiPaperProps, 'sx'> & {
+type CustomPaperProps = {
   customBackgroundColor?: string;
   customBorderRadius?: string | number;
 };
 
 // styled
-const StyledPaper = styled(MuiPaper)<CustomPaperProps>(({ customBackgroundColor, customBorderRadius }) => ({
-  ...(customBackgroundColor && { backgroundColor: customBackgroundColor }),
-  ...(customBorderRadius && { borderRadius: customBorderRadius }),
+const StyledPaper = styled(MuiPaper)<{props: CustomPaperProps}>(({ props }) => ({
+  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
+  ...(props.customBorderRadius && { borderRadius: props.customBorderRadius }),
 }));
 
 // コンポーネント
-export const Paper: React.FC<CustomPaperProps> = (props) => {
-  return <StyledPaper {...props} />;
+export const Paper = ( props: CustomPaperProps) => {
+  return <StyledPaper props={props} />;
 };

@@ -1,22 +1,22 @@
 import React from 'react';
-import MuiTextField, { TextFieldProps as MuiTextFieldProps } from '@mui/material/TextField';
+import MuiTextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomTextFieldProps = Omit<MuiTextFieldProps, 'sx'> & {
+type CustomTextFieldProps = {
   customWidth?: string | number;
   customBackgroundColor?: string;
   customTextColor?: string;
 };
 
 // styled
-const StyledTextField = styled(MuiTextField)<CustomTextFieldProps>(({ customWidth, customBackgroundColor, customTextColor }) => ({
-  ...(customWidth && { width: customWidth }),
-  ...(customBackgroundColor && { backgroundColor: customBackgroundColor }),
-  ...(customTextColor && { color: customTextColor }),
+const StyledTextField = styled(MuiTextField)<{props: CustomTextFieldProps}>(({ props }) => ({
+  ...(props.customWidth && { width: props.customWidth }),
+  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
+  ...(props.customTextColor && { color: props.customTextColor }),
 }));
 
 // コンポーネント
-export const TextField: React.FC<CustomTextFieldProps> = (props) => {
-  return <StyledTextField {...props} />;
+export const TextField = ( props: CustomTextFieldProps) => {
+  return <StyledTextField props={props} />;
 };

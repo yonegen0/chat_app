@@ -1,20 +1,20 @@
 import React from 'react';
-import MuiTypography, { TypographyProps as MuiTypographyProps } from '@mui/material/Typography';
+import MuiTypography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomTypographyProps = Omit<MuiTypographyProps, 'sx'> & {
+type CustomTypographyProps = {
   customTextColor?: string;
   customFontSize?: string | number;
 };
 
 // styled
-const StyledTypography = styled(MuiTypography)<CustomTypographyProps>(({ customTextColor, customFontSize }) => ({
-  ...(customTextColor && { color: customTextColor }),
-  ...(customFontSize && { fontSize: customFontSize }),
+const StyledTypography = styled(MuiTypography)<{props: CustomTypographyProps}>(({ props }) => ({
+  ...(props.customTextColor && { color: props.customTextColor }),
+  ...(props.customFontSize && { fontSize: props.customFontSize }),
 }));
 
 // コンポーネント
-export const Typography: React.FC<CustomTypographyProps> = (props) => {
-  return <StyledTypography {...props} />;
+export const Typography = ( props: CustomTypographyProps) => {
+  return <StyledTypography props={props} />;
 };
