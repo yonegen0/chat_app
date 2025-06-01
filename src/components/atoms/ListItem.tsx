@@ -1,18 +1,21 @@
 import React from 'react';
-import MuiListItem from '@mui/material/ListItem';
+import { ListItem as MuiListItem, ListItemProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomListItemProps = {
-  customBackgroundColor?: string;
+type CustomListItemProps = ListItemProps & {
+  children: React.ReactNode;
+  mb?: number | string;
+  justifyContent?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
 };
 
 // styled
-const StyledListItem = styled(MuiListItem)<{props: CustomListItemProps}>(({ props }) => ({
-  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
+const StyledListItem = styled(MuiListItem)<{ props: CustomListItemProps }>(({ props }) => ({
+  ...(props.mb && { marginBottom: props.mb }),
+  ...(props.justifyContent && { justifyContent: props.justifyContent }),
 }));
 
 // コンポーネント
-export const ListItem = ( props: CustomListItemProps) => {
-  return <StyledListItem props={props} />;
+export const ListItem = (props: CustomListItemProps) => {
+  return <StyledListItem props={props}>{props.children}</StyledListItem>;
 };

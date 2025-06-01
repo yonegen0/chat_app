@@ -1,22 +1,19 @@
 import React from 'react';
-import MuiButton from '@mui/material/Button';
+import { Button as MuiButton, ButtonProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomButtonProps = {
-  customWidth?: string | number;
-  customBackgroundColor?: string;
-  customTextColor?: string;
+type CustomButtonProps = ButtonProps & {
+  children: React.ReactNode;
+  whiteSpace?: 'normal' | 'nowrap' | 'pre' | 'pre-wrap' | 'pre-line';
 };
 
 // styled
-const StyledButton = styled(MuiButton)<{props: CustomButtonProps}>(({ props }) => ({
-  ...(props.customWidth && { width: props.customWidth }),
-  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
-  ...(props.customTextColor && { color: props.customTextColor }),
+const StyledButton = styled(MuiButton)<{ props: CustomButtonProps }>(({ props }) => ({
+  ...(props.whiteSpace && { whiteSpace: props.whiteSpace }),
 }));
 
 // コンポーネント
-export const Button = ( props: CustomButtonProps) => {
-  return <StyledButton props={props} />;
+export const Button = (props: CustomButtonProps) => {
+  return <StyledButton props={props}>{props.children}</StyledButton>;
 };

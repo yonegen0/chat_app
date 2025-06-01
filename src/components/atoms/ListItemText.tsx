@@ -1,15 +1,15 @@
 import React from 'react';
-import MuiListItemText from '@mui/material/ListItemText';
+import { ListItemText as MuiListItemText, ListItemTextProps as MuiListItemTextProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomListItemTextProps = {
+type CustomListItemTextProps = MuiListItemTextProps & {
   primaryTextColor?: string;
   secondaryTextColor?: string;
 };
 
 // styled
-const StyledListItemText = styled(MuiListItemText)<{props: CustomListItemTextProps}>(({ props }) => ({
+const StyledListItemText = styled(MuiListItemText)<{ props: CustomListItemTextProps }>(({ props }) => ({
   '& .MuiListItemText-primary': {
     ...(props.primaryTextColor && { color: props.primaryTextColor }),
   },
@@ -19,6 +19,6 @@ const StyledListItemText = styled(MuiListItemText)<{props: CustomListItemTextPro
 }));
 
 // コンポーネント
-export const ListItemText = ( props: CustomListItemTextProps) => {
+export const ListItemText = (props: CustomListItemTextProps) => {
   return <StyledListItemText props={props} />;
 };

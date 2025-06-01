@@ -1,20 +1,27 @@
 import React from 'react';
-import MuiPaper from '@mui/material/Paper';
+import { Box as MuiBox, BoxProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Property } from 'csstype'; 
 
 // type
-type CustomPaperProps = {
-  customBackgroundColor?: string;
-  customBorderRadius?: string | number;
+type CustomBoxProps = BoxProps & {
+  display?: Property.Display;
+  gap?: Property.Gap | number;
+  mb?: Property.MarginBottom | number;
+  alignItems?: Property.AlignItems;
+  flexDirection?: Property.FlexDirection;
 };
 
 // styled
-const StyledPaper = styled(MuiPaper)<{props: CustomPaperProps}>(({ props }) => ({
-  ...(props.customBackgroundColor && { backgroundColor: props.customBackgroundColor }),
-  ...(props.customBorderRadius && { borderRadius: props.customBorderRadius }),
+const StyledBox = styled(MuiBox)<{props: CustomBoxProps}>(({ theme, props }) => ({
+  ...(props.display && { display: props.display }),
+  ...(props.gap !== undefined && { gap: typeof props.gap === 'number' ? theme.spacing(props.gap) : props.gap }),
+  ...(props.mb !== undefined && { marginBottom: typeof props.mb === 'number' ? theme.spacing(props.mb) : props.mb }),
+  ...(props.alignItems && { alignItems: props.alignItems }),
+  ...(props.flexDirection && { flexDirection: props.flexDirection }),
 }));
 
 // コンポーネント
-export const Paper = ( props: CustomPaperProps) => {
-  return <StyledPaper props={props} />;
+export const Box = (props: CustomBoxProps) => {
+  return <StyledBox props={props} />;
 };

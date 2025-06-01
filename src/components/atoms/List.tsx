@@ -1,20 +1,19 @@
 import React from 'react';
-import MuiList from '@mui/material/List';
+import { List as MuiList, ListProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomListProps = {
-  customWidth?: string | number;
-  customHeight?: string | number;
+type CustomListProps = ListProps & {
+  children: React.ReactNode;
+  p?: number | string;
 };
 
 // styled
-const StyledList = styled(MuiList)<{props: CustomListProps}>(({ props }) => ({
-  ...(props.customWidth && { width: props.customWidth }),
-  ...(props.customHeight && { height: props.customHeight }),
+const StyledList = styled(MuiList)<{ props: CustomListProps }>(({ props }) => ({
+  ...(props.p && { padding: props.p }),
 }));
 
 // コンポーネント
-export const List = ( props: CustomListProps) => {
-  return <StyledList props={props} />;
+export const List = (props: CustomListProps) => {
+  return <StyledList props={props}>{props.children}</StyledList>;
 };
