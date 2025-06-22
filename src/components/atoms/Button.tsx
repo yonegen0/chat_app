@@ -1,19 +1,33 @@
 import React from 'react';
-import { Button as MuiButton, ButtonProps } from '@mui/material';
+import { Button as MuiButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // type
-type CustomButtonProps = ButtonProps & {
-  children: React.ReactNode;
-  whiteSpace?: 'normal' | 'nowrap' | 'pre' | 'pre-wrap' | 'pre-line';
+export type CustomButtonProps = {
+  /** ラベル */
+  label: string;
+  /** 背景色 */
+  backgroundColor?: string;
+  /** 非活性 */
+  disabled?: boolean;
+  /** クリック処理 */
+  onClick?: () => void;
 };
 
 // styled
-const StyledButton = styled(MuiButton)<{ props: CustomButtonProps }>(({ props }) => ({
-  ...(props.whiteSpace && { whiteSpace: props.whiteSpace }),
+const StyledButton = styled(MuiButton)<{ backgroundColor?: string }>(({ backgroundColor }) => ({
+  backgroundColor: backgroundColor,
 }));
 
 // コンポーネント
 export const Button = (props: CustomButtonProps) => {
-  return <StyledButton props={props}>{props.children}</StyledButton>;
+  return <StyledButton
+    // size={props.size?? 'small'}
+    type="submit"
+    variant="contained"
+    color="primary"
+    // endIcon={}
+    disabled={props.disabled?? false}
+    >{props.label}
+    </StyledButton>
 };
