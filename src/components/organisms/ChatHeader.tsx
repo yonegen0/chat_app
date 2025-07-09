@@ -1,11 +1,15 @@
 import React from 'react';
-import { Typography } from '../atoms/Typography';
+import { Typography } from '@mui/material';
+
+export type ChatHeaderProps = {
+  title: string;
+};
 
 // ヘッダ
-export const ChatHeader = () => {
+export const ChatHeader = (props: ChatHeaderProps) => {
   return (
     <Typography variant="h5" component="h1" gutterBottom align="center">
-      Chat App (チャットアプリ)
+      {props.title}
     </Typography>
   );
 };

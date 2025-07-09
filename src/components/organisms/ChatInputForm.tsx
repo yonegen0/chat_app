@@ -1,43 +1,47 @@
 import React, { FormEvent } from 'react';
 import SendIcon from '@mui/icons-material/Send';
-import { Box } from '../atoms/Box';
-import { TextField } from '../atoms/TextField';
-import { Button } from '../atoms/Button';
+import { Box, TextField, Button, styled } from '@mui/material';
 
 type ChatInputFormProps = {
   message: string;
-  onMessageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onSendMessage: (event: FormEvent) => void;
   isSendButtonDisabled: boolean;
+  onMessageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onSendMessage?: (event: FormEvent) => void;
 };
 
+export const StyledBox = styled(Box)({
+  display : "flex",
+  gap: 1,
+  component: "form",
+});
+export const StyledTextField = styled(TextField)({
+  p : 1,
+});
+export const StyledButton = styled(Button)({
+  type: "submit",
+  variant: "contained",
+  color: "primary",
+  whiteSpace:"nowrap"
+});
+
 // メッセージ入力と送信ボタン
-export const ChatInputForm = ({
-  message,
-  onMessageChange,
-  onSendMessage,
-  isSendButtonDisabled,
-}: ChatInputFormProps) => {
+export const ChatInputForm = (props: ChatInputFormProps) => {
   return (
-    <Box component="form" onSubmit={onSendMessage} display="flex" gap={1}>
+    <StyledBox  onSubmit={props.onSendMessage}>
       <TextField
         fullWidth
         variant="outlined"
         size="small"
         placeholder="メッセージを入力してください"
-        value={message}
-        onChange={onMessageChange}
+        value={props.message}
+        onChange={props.onMessageChange}
       />
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
+      <StyledButton
         endIcon={<SendIcon />}
-        disabled={isSendButtonDisabled}
-        whiteSpace="nowrap"
+        disabled={props.isSendButtonDisabled}
       >
         送信
-      </Button>
-    </Box>
+      </StyledButton>
+    </StyledBox>
   );
 };
