@@ -30,7 +30,29 @@ export default function LoginForm() {
    * @param event FormEvent<HTMLFormElement> - フォームイベント
    */
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    // 処理記載予定
+    event.preventDefault(); // ページの再読み込みを防ぐ
+
+    setError(null); // エラーメッセージをクリア
+    setSuccess(null); // 成功メッセージをクリア
+    setLoading(true); // ローディング開始
+
+    // 認証処理
+    try {
+      if (username === 'user' && password === 'password') {
+        // 成功時の処理
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        setSuccess('ログインに成功しました！');
+      } else {
+        // 失敗時の処理
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        setError('ユーザー名またはパスワードが間違っています。');
+      }
+    } catch (err) {
+      console.error('ログイン中にエラーが発生しました:', err);
+      setError('ログイン中に予期せぬエラーが発生しました。');
+    } finally {
+      setLoading(false); // ローディング終了
+    }
   };
 
   return (
