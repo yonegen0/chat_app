@@ -2,6 +2,7 @@
 
 import React, { useState, FormEvent } from 'react';
 import {
+  styled,
   TextField,
   Button,
   Box,
@@ -9,6 +10,29 @@ import {
   Paper,
   Alert,
 } from '@mui/material'; 
+
+// Boxスタイル
+export const StyledBox = styled(Box)({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  minHeight: '100vh',
+  backgroundColor: '#f0f2f5',
+});
+// Paperスタイル
+export const StyledPaper = styled(Paper)({
+  padding: 4,
+  maxWidth: 400,
+  width: '100%',
+});
+// Alertスタイル
+export const StyledAlert = styled(Alert)({
+  mb: 2,
+});
+// Buttonスタイル
+export const StyledButton = styled(Button)({
+  mt: 2,
+});
 
 /**
  * ログインフォームコンポーネント
@@ -56,28 +80,20 @@ export default function LoginForm() {
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f0f2f5',
-      }}
-    >
-      <Paper elevation={3} sx={{ padding: 4, maxWidth: 400, width: '100%' }}>
+    <StyledBox>
+      <StyledPaper elevation={3}>
         <Typography variant="h5" component="h1" gutterBottom align="center">
           ログイン
         </Typography>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <StyledAlert severity="error">
             {error}
-          </Alert>
+          </StyledAlert>
         )}
         {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
+          <StyledAlert severity="success">
             {success}
-          </Alert>
+          </StyledAlert>
         )}
         <form onSubmit={handleSubmit}>
           <TextField
@@ -99,18 +115,17 @@ export default function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
-          <Button
+          <StyledButton
             type="submit"
             variant="contained"
             color="primary"
             fullWidth
-            sx={{ mt: 2 }}
             disabled={loading}
           >
             {loading ? 'ログイン中...' : 'ログイン'}
-          </Button>
+          </StyledButton>
         </form>
-      </Paper>
-    </Box>
+      </StyledPaper>
+    </StyledBox>
   );
 };
