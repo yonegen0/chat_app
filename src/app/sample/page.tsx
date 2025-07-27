@@ -56,6 +56,29 @@ export default function ChatPage() {
       setUsername(randomName);
       localStorage.setItem('chatUsername', randomName);
     }
+
+    // ルームとメッセージをlocalStorageからロード
+    const storedRooms = localStorage.getItem('chatRooms');
+    const storedRoomMessages = localStorage.getItem('chatRoomMessages');
+    const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
+
+    if (storedRooms) {
+      setRooms(JSON.parse(storedRooms));
+    } else {
+      setRooms(['General']); // 初期ルーム
+    }
+
+    if (storedRoomMessages) {
+      setRoomMessages(JSON.parse(storedRoomMessages));
+    } else {
+      setRoomMessages({ 'General': [] }); // 各ルームの初期メッセージ
+    }
+
+    if (storedCurrentRoom) {
+      setCurrentRoom(storedCurrentRoom);
+    } else {
+      setCurrentRoom('General'); // 初期ルームを設定
+    }
   }, []);
 
   // currentRoom または roomMessages が変更されたときにlocalStorageを更新
