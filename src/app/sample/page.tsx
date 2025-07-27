@@ -82,6 +82,12 @@ export default function ChatPage() {
     localStorage.setItem('chatUsername', e.target.value);
   };
 
+  // ルーム切り替えハンドラ
+  const handleRoomChange = (roomName: string) => {
+    setCurrentRoom(roomName);
+    handleClose(); // メニューを閉じる
+  };
+
   // ルーム作成ダイアログを開く
   const handleOpenCreateRoomDialog = () => {
     setOpenCreateRoomDialog(true);
@@ -92,6 +98,22 @@ export default function ChatPage() {
   const handleCloseCreateRoomDialog = () => {
     setOpenCreateRoomDialog(false);
     setNewRoomName(''); // 入力フィールドをクリア
+  };
+
+  // ルーム作成の確定ハンドラ
+  const handleCreateRoom = () => {
+    if (newRoomName.trim() && !rooms.includes(newRoomName.trim())) {
+      const trimmedRoomName = newRoomName.trim();
+      setRooms((prevRooms) => [...prevRooms, trimmedRoomName]);
+      setRoomMessages((prevRoomMessages) => ({
+        ...prevRoomMessages,
+        [trimmedRoomName]: [], // 新しいルームには空のメッセージ配列を割り当てる
+      }));
+      setCurrentRoom(trimmedRoomName); // 新しいルームに切り替える
+      handleCloseCreateRoomDialog();
+    } else {
+      alert('ルーム名が無効か、すでに存在しています。');
+    }
   };
 
   return (
@@ -137,6 +159,7 @@ export default function ChatPage() {
               {rooms.map((room) => (
                 <MenuItem
                   key={room}
+                  onClick={() => handleRoomChange(room)}
                   selected={room === currentRoom} // 現在のルームをハイライト
                 >
                   {room}
@@ -165,7 +188,7 @@ export default function ChatPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseCreateRoomDialog}>キャンセル</Button>
-          <Button  disabled={!newRoomName.trim()}>作成</Button>
+          <Button onClick={handleCreateRoom} disabled={!newRoomName.trim()}>作成</Button>
         </DialogActions>
       </Dialog>
 
