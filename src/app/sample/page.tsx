@@ -58,6 +58,13 @@ export default function ChatPage() {
     }
   }, []);
 
+  // currentRoom または roomMessages が変更されたときにlocalStorageを更新
+  useEffect(() => {
+    localStorage.setItem('chatRooms', JSON.stringify(rooms));
+    localStorage.setItem('chatRoomMessages', JSON.stringify(roomMessages));
+    localStorage.setItem('chatCurrentRoom', currentRoom);
+  }, [rooms, roomMessages, currentRoom]);
+
   // 現在のルームのメッセージを ChatTemplate に渡すために抽出
   const currentMessages = roomMessages[currentRoom] || [];
 
@@ -72,6 +79,11 @@ export default function ChatPage() {
         user: username,
         timestamp: new Date().toLocaleTimeString(),
       };
+
+      setRoomMessages((prevRoomMessages) => ({
+        ...prevRoomMessages,
+        [currentRoom]: [...(prevRoomMessages[currentRoom] || []), newMessage],
+      }));
       setMessageInput('');
     }
   };
