@@ -12,14 +12,17 @@ import {
   MenuItem,
   Toolbar,
   Typography,
-  Dialog, // ルーム作成のためのダイアログを追加
+  Dialog,
   DialogTitle,
   DialogContent,
   TextField,
-  DialogActions
+  DialogActions,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import MenuIcon from "@mui/icons-material/Menu";
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete'; // 削除アイコン
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
@@ -28,7 +31,6 @@ export default function ChatPage() {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  // メニューを閉じる
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -37,10 +39,13 @@ export default function ChatPage() {
   const [openCreateRoomDialog, setOpenCreateRoomDialog] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
 
+  // ルーム削除確認ダイアログの状態管理
+  const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+
   // 複数ルーム管理のためのステート
-  const [rooms, setRooms] = useState<string[]>([]); // 利用可能なルームのリスト
-  const [currentRoom, setCurrentRoom] = useState<string>('General'); // 現在のルーム
-  // 各ルームのメッセージを保存するオブジェクト
+  const [rooms, setRooms] = useState<string[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<string>('General');
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
 
   const [messageInput, setMessageInput] = useState('');
@@ -57,28 +62,35 @@ export default function ChatPage() {
       localStorage.setItem('chatUsername', randomName);
     }
 
-    // ルームとメッセージをlocalStorageからロード
     const storedRooms = localStorage.getItem('chatRooms');
     const storedRoomMessages = localStorage.getItem('chatRoomMessages');
     const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
 
+    let initialRooms: string[] = ['General'];
+    let initialRoomMessages: { [key: string]: Message[] } = { 'General': [] };
+    let initialCurrentRoom: string = 'General';
+
     if (storedRooms) {
-      setRooms(JSON.parse(storedRooms));
-    } else {
-      setRooms(['General']); // 初期ルーム
+      initialRooms = JSON.parse(storedRooms);
     }
-
     if (storedRoomMessages) {
-      setRoomMessages(JSON.parse(storedRoomMessages));
-    } else {
-      setRoomMessages({ 'General': [] }); // 各ルームの初期メッセージ
+      initialRoomMessages = JSON.parse(storedRoomMessages);
+    }
+    if (storedCurrentRoom && initialRooms.includes(storedCurrentRoom)) {
+      initialCurrentRoom = storedCurrentRoom;
+    } else if (initialRooms.length > 0) {
+      initialCurrentRoom = initialRooms[0]; // 保存されたcurrentRoomが存在しないか、削除された場合は最初のルームに設定
     }
 
-    if (storedCurrentRoom) {
-      setCurrentRoom(storedCurrentRoom);
-    } else {
-      setCurrentRoom('General'); // 初期ルームを設定
+    // "General" ルームがなければ追加する
+    if (!initialRooms.includes('General')) {
+      initialRooms = ['General', ...initialRooms];
+      initialRoomMessages = { 'General': [], ...initialRoomMessages };
     }
+
+    setRooms(initialRooms);
+    setRoomMessages(initialRoomMessages);
+    setCurrentRoom(initialCurrentRoom);
   }, []);
 
   // currentRoom または roomMessages が変更されたときにlocalStorageを更新
@@ -88,10 +100,8 @@ export default function ChatPage() {
     localStorage.setItem('chatCurrentRoom', currentRoom);
   }, [rooms, roomMessages, currentRoom]);
 
-  // 現在のルームのメッセージを ChatTemplate に渡すために抽出
   const currentMessages = roomMessages[currentRoom] || [];
 
-  // メッセージ送信ハンドラ
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
 
@@ -111,44 +121,58 @@ export default function ChatPage() {
     }
   };
 
-  // ユーザー名変更ハンドラ
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
     localStorage.setItem('chatUsername', e.target.value);
   };
 
-  // ルーム切り替えハンドラ
   const handleRoomChange = (roomName: string) => {
     setCurrentRoom(roomName);
-    handleClose(); // メニューを閉じる
+    handleClose();
   };
 
-  // ルーム作成ダイアログを開く
   const handleOpenCreateRoomDialog = () => {
     setOpenCreateRoomDialog(true);
-    handleClose(); // メニューを閉じる
+    handleClose();
   };
 
-  // ルーム作成ダイアログを閉じる
   const handleCloseCreateRoomDialog = () => {
     setOpenCreateRoomDialog(false);
-    setNewRoomName(''); // 入力フィールドをクリア
+    setNewRoomName('');
   };
 
-  // ルーム作成の確定ハンドラ
   const handleCreateRoom = () => {
     if (newRoomName.trim() && !rooms.includes(newRoomName.trim())) {
       const trimmedRoomName = newRoomName.trim();
       setRooms((prevRooms) => [...prevRooms, trimmedRoomName]);
       setRoomMessages((prevRoomMessages) => ({
         ...prevRoomMessages,
-        [trimmedRoomName]: [], // 新しいルームには空のメッセージ配列を割り当てる
+        [trimmedRoomName]: [],
       }));
-      setCurrentRoom(trimmedRoomName); // 新しいルームに切り替える
+      setCurrentRoom(trimmedRoomName);
       handleCloseCreateRoomDialog();
     } else {
       alert('ルーム名が無効か、すでに存在しています。');
     }
+  };
+
+  // ルーム削除確認ダイアログを開くハンドラ
+  const handleOpenDeleteConfirmDialog = (roomName: string) => {
+    setRoomToDelete(roomName);
+    setOpenDeleteConfirmDialog(true);
+    handleClose(); // メニューを閉じる
+  };
+
+  // ルーム削除確認ダイアログを閉じるハンドラ
+  const handleCloseDeleteConfirmDialog = () => {
+    setOpenDeleteConfirmDialog(false);
+    setRoomToDelete(null);
+  };
+
+  // ルーム削除の確定ハンドラ
+  const handleDeleteRoom = () => {
+    // 削除処理予定
+    handleCloseDeleteConfirmDialog();
   };
 
   return (
@@ -172,9 +196,9 @@ export default function ChatPage() {
               size="large"
               edge="start"
               color="inherit"
-              aria-label="ルーム作成/選択メニュー" // ARIAラベルを更新
+              aria-label="ルーム操作メニュー" // ARIAラベルを更新
               onClick={handleClick}
-              id="room-menu-button" // IDをより具体的に
+              id="room-menu-button"
               aria-controls={open ? "room-menu" : undefined}
               aria-haspopup="true"
               aria-expanded={open ? "true" : undefined}
@@ -183,21 +207,38 @@ export default function ChatPage() {
               <AddIcon />
             </IconButton>
             <Menu
-              id="room-menu" // IDを更新
+              id="room-menu"
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
-              aria-labelledby="room-menu-button" // ARIAラベルを更新
+              aria-labelledby="room-menu-button"
             >
-              <MenuItem onClick={handleOpenCreateRoomDialog}>新しいルームを作成</MenuItem>
+              <MenuItem onClick={handleOpenCreateRoomDialog}>
+                <ListItemIcon>
+                  <AddIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>新しいルームを作成</ListItemText>
+              </MenuItem>
               {/* 既存のルームをマップして表示 */}
               {rooms.map((room) => (
                 <MenuItem
                   key={room}
-                  onClick={() => handleRoomChange(room)}
-                  selected={room === currentRoom} // 現在のルームをハイライト
+                  onClick={() => handleRoomChange(room)} // ルーム切り替えは引き続き可能
+                  selected={room === currentRoom}
                 >
-                  {room}
+                  <ListItemText>{room}</ListItemText>
+                  {/* Generalルーム以外に削除ボタンを表示 */}
+                  {room !== 'General' && (
+                    <ListItemIcon
+                      onClick={(e) => {
+                        e.stopPropagation(); // 親要素のMenuItemのonClickが発火しないようにする
+                        handleOpenDeleteConfirmDialog(room);
+                      }}
+                      sx={{ minWidth: 20, ml: 1 }} // アイコンの位置調整
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                  )}
                 </MenuItem>
               ))}
             </Menu>
@@ -227,10 +268,22 @@ export default function ChatPage() {
         </DialogActions>
       </Dialog>
 
+      {/* ルーム削除確認ダイアログ */}
+      <Dialog open={openDeleteConfirmDialog} onClose={handleCloseDeleteConfirmDialog}>
+        <DialogTitle>ルームを削除しますか？</DialogTitle>
+        <DialogContent>
+          <Typography>本当にルーム「{roomToDelete}」を削除してもよろしいですか？この操作は元に戻せません。</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirmDialog}>キャンセル</Button>
+          <Button onClick={handleDeleteRoom} color="error">削除</Button>
+        </DialogActions>
+      </Dialog>
+
       <ChatTemplate
         username={username}
         onUsernameChange={handleUsernameChange}
-        messages={currentMessages} // 現在のルームのメッセージを渡す
+        messages={currentMessages}
         messageInput={messageInput}
         onMessageInputChange={(e) => setMessageInput(e.target.value)}
         onSendMessage={handleSendMessage}
