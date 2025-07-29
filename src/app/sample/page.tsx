@@ -171,7 +171,24 @@ export default function ChatPage() {
 
   // ルーム削除の確定ハンドラ
   const handleDeleteRoom = () => {
-    // 削除処理予定
+    if (roomToDelete && roomToDelete !== 'General') { // 'General'ルームは削除不可とする
+      setRooms((prevRooms) => prevRooms.filter((room) => room !== roomToDelete));
+
+      setRoomMessages((prevRoomMessages) => {
+        const newRoomMessages = { ...prevRoomMessages };
+        delete newRoomMessages[roomToDelete];
+        return newRoomMessages;
+      });
+
+      // 削除したルームが現在のルームだった場合、別のルームに切り替える
+      if (currentRoom === roomToDelete) {
+        // 削除後、残っているルームがあれば最初のルームに、なければ'General'に切り替える
+        const remainingRooms = rooms.filter((room) => room !== roomToDelete);
+        setCurrentRoom(remainingRooms.length > 0 ? remainingRooms[0] : 'General');
+      }
+    } else if (roomToDelete === 'General') {
+        alert("「General」ルームは削除できません。");
+    }
     handleCloseDeleteConfirmDialog();
   };
 
