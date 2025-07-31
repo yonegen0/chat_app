@@ -27,12 +27,20 @@ import DeleteIcon from '@mui/icons-material/Delete'; // 削除アイコン
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [roomAnchorEl, setRoomAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const roomOpen = Boolean(roomAnchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
     setAnchorEl(null);
+  };
+  const roomHandleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setRoomAnchorEl(event.currentTarget);
+  };
+  const roomHandleClose = () => {
+    setRoomAnchorEl(null);
   };
 
   // ルーム作成ダイアログの状態管理
@@ -202,10 +210,41 @@ export default function ChatPage() {
               edge="start"
               color="inherit"
               aria-label="menu"
+              onClick={roomHandleClick}
               sx={{ mr: 2 }}
             >
               <MenuIcon />
             </IconButton>
+            <Menu
+              id="room-menu"
+              anchorEl={roomAnchorEl}
+              open={roomOpen}
+              onClose={roomHandleClose}
+              aria-labelledby="room-menu-button"
+            >
+              {/* 既存のルームをマップして表示 */}
+              {rooms.map((room) => (
+                <MenuItem
+                  key={room}
+                  onClick={() => handleRoomChange(room)} // ルーム切り替えは引き続き可能
+                  selected={room === currentRoom}
+                >
+                  <ListItemText>{room}</ListItemText>
+                  {/* Generalルーム以外に削除ボタンを表示 */}
+                  {room !== 'General' && (
+                    <ListItemIcon
+                      onClick={(e) => {
+                        e.stopPropagation(); // 親要素のMenuItemのonClickが発火しないようにする
+                        handleOpenDeleteConfirmDialog(room);
+                      }}
+                      sx={{ minWidth: 20, ml: 1 }} // アイコンの位置調整
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                  )}
+                </MenuItem>
+              ))}
+            </Menu>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               チャットアプリ - 現在のルーム: {currentRoom}
             </Typography>
@@ -236,28 +275,6 @@ export default function ChatPage() {
                 </ListItemIcon>
                 <ListItemText>新しいルームを作成</ListItemText>
               </MenuItem>
-              {/* 既存のルームをマップして表示 */}
-              {rooms.map((room) => (
-                <MenuItem
-                  key={room}
-                  onClick={() => handleRoomChange(room)} // ルーム切り替えは引き続き可能
-                  selected={room === currentRoom}
-                >
-                  <ListItemText>{room}</ListItemText>
-                  {/* Generalルーム以外に削除ボタンを表示 */}
-                  {room !== 'General' && (
-                    <ListItemIcon
-                      onClick={(e) => {
-                        e.stopPropagation(); // 親要素のMenuItemのonClickが発火しないようにする
-                        handleOpenDeleteConfirmDialog(room);
-                      }}
-                      sx={{ minWidth: 20, ml: 1 }} // アイコンの位置調整
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </ListItemIcon>
-                  )}
-                </MenuItem>
-              ))}
             </Menu>
             <Button color="inherit">ログアウト</Button>
           </Toolbar>
