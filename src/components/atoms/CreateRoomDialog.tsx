@@ -9,18 +9,19 @@ import {
 } from '@mui/material';
 
 type CreateRoomDialogProps = {
-  // 
+  // ダイアログ開閉
   open: boolean;
-  //   
+  // ルーム名
   value: string;
-  //   
+  // クローズアクション
   onClose: () => void;
-  //   
+  // ルーム名変更アクション
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  //   
+  // ルーム作成アクション
   onCreateRoom: () => void;
 };
 
+// ルーム作成ダイアログ
 export const CreateRoomDialog = (props: CreateRoomDialogProps) => {
   return (
     <Dialog open={props.open} onClose={props.onClose}>

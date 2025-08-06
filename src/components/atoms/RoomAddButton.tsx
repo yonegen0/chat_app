@@ -7,7 +7,7 @@ type RoomAddButtonProps = {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
-// ルーム作成メニューを開くボタン
+// メニューを開くボタン
 export const RoomAddButton = (props: RoomAddButtonProps) => {
   return (
     <IconButton
