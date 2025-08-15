@@ -16,10 +16,10 @@ type RoomMenuItemProps = {
 };
 
 // styled
-const StyledListItemIcon = styled(ListItemIcon)<{ backgroundColor?: string }>(({ backgroundColor }) => ({
+const StyledListItemIcon = styled(ListItemIcon)({
   minWidth: 20,
   ml: 1
-}));
+});
 
 // ルームリストの1項目
 export const RoomMenuItem = (props: RoomMenuItemProps) => {
