@@ -16,10 +16,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  // ここにargsを追加する
   args: {
     open: true,
-    anchorEl: null, // 初期値はnull
+    anchorEl: null,
     rooms: ['aaa', 'bbb'],
     currentRoom: 'aaa',
     onClose: fn(),

@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 
-type DeleteRoomDialogProps = {
+export type DeleteRoomDialogProps = {
   // ダイアログ開閉
   open: boolean;
   // ルーム名

@@ -8,7 +8,7 @@ import {
   Button,
 } from '@mui/material';
 
-type CreateRoomDialogProps = {
+export type CreateRoomDialogProps = {
   // ダイアログ開閉
   open: boolean;
   // ルーム名
