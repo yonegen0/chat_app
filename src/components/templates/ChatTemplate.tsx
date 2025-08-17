@@ -1,5 +1,4 @@
 import React, { FormEvent } from 'react';
-import { ChatHeader } from '../organisms/ChatHeader';
 import { UserNameInput } from '../molecules/UserNameInput';
 import { MessageList } from '../organisms/MessageList';
 import { ChatInputForm } from '../organisms/ChatInputForm';
@@ -34,7 +33,6 @@ export const ChatTemplate = (props: ChatTemplateProps) => {
   return (
     <StyledContainer>
       <StyledPaper>
-        <ChatHeader title='Chat App (チャットアプリ)' />
         <UserNameInput username={props.username} onUsernameChange={props.onUsernameChange} />
         <MessageList messages={props.messages} currentUsername={props.username} />
         <ChatInputForm
