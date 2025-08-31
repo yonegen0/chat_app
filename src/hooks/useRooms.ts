@@ -4,7 +4,7 @@ import { useState } from 'react';
 const WEB_API_URL = 'http://127.0.0.1:5000';
 
 /**
- * ルーム作成API (POST /addRooms) を呼び出すためのReactカスタムフック。
+ * ルーム作成API (POST /addRooms) を呼び出すためのフック。
  */
 export const useCreateRoom = () => {
   // API呼び出しの状態を管理するためのstate
@@ -52,4 +52,42 @@ export const useCreateRoom = () => {
   };
 
   return { createRoom, loading, error, room };
+};
+
+/**
+ * ルーム一覧取得API (GET /rooms) を呼び出すためのフック。
+ */
+export const useFetchRooms = () => {
+  // API呼び出しの状態を管理するためのstate
+  const [loading, setLoading] = useState<boolean>(false);
+  // エラーメッセージを管理するためのstate
+  const [error, setError] = useState<string | null>(null);
+  // 取得したルームのリストを管理するためのstate
+  const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
+
+  /**
+   * ルーム一覧を取得するためにAPIを呼び出す非同期関数。
+   */
+  const fetchRooms = async (): Promise<void> => {
+    setLoading(true); // ローディングを開始
+    setError(null);    // エラーをリセット
+    
+    try {
+      const response = await fetch(`${WEB_API_URL}/rooms`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'ルーム一覧の取得に失敗しました。');
+      }
+
+      const data = await response.json();
+      setRooms(data.rooms); 
+    } catch (e: any) {
+      setError(e.message || '不明なエラーが発生しました。'); // エラーメッセージをセット
+    } finally {
+      setLoading(false); // ローディングを終了
+    }
+  };
+
+  return { fetchRooms, rooms, loading, error };
 };
