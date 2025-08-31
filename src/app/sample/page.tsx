@@ -4,6 +4,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Message } from '../../types/index';
 import { ChatTemplate } from '@/components/templates/ChatTemplate';
 import { ChatHeader } from '@/components/organisms/ChatHeader';
+import { useCreateRoom, useFetchRooms } from '@/hooks/useRooms';
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
@@ -11,12 +12,21 @@ export default function ChatPage() {
   const [newRoomName, setNewRoomName] = useState('');
   const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
-  const [rooms, setRooms] = useState<string[]>([]);
   const [currentRoom, setCurrentRoom] = useState<string>('General');
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
   const [username, setUsername] = useState<string>('');
 
+  // 新しいカスタムフックを使用してルームの作成と取得を処理
+  const { createRoom } = useCreateRoom();
+  const { rooms, fetchRooms } = useFetchRooms();
+
+  // コンポーネントの初回ロード時にルーム一覧をAPIから取得
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  // ユーザー名を管理するロジック（localStorageを使用）
   useEffect(() => {
     const storedUser = localStorage.getItem('chatUsername');
     if (storedUser) {
@@ -27,41 +37,29 @@ export default function ChatPage() {
       localStorage.setItem('chatUsername', randomName);
     }
 
-    const storedRooms = localStorage.getItem('chatRooms');
+    // ルームメッセージと現在のルームをlocalStorageから読み込む
     const storedRoomMessages = localStorage.getItem('chatRoomMessages');
     const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
 
-    let initialRooms: string[] = ['General'];
     let initialRoomMessages: { [key: string]: Message[] } = { 'General': [] };
     let initialCurrentRoom: string = 'General';
 
-    if (storedRooms) {
-      initialRooms = JSON.parse(storedRooms);
-    }
     if (storedRoomMessages) {
       initialRoomMessages = JSON.parse(storedRoomMessages);
     }
-    if (storedCurrentRoom && initialRooms.includes(storedCurrentRoom)) {
+    if (storedCurrentRoom) {
       initialCurrentRoom = storedCurrentRoom;
-    } else if (initialRooms.length > 0) {
-      initialCurrentRoom = initialRooms[0];
     }
 
-    if (!initialRooms.includes('General')) {
-      initialRooms = ['General', ...initialRooms];
-      initialRoomMessages = { 'General': [], ...initialRoomMessages };
-    }
-
-    setRooms(initialRooms);
     setRoomMessages(initialRoomMessages);
     setCurrentRoom(initialCurrentRoom);
   }, []);
 
+  // ルームメッセージと現在のルームをlocalStorageに保存するロジック
   useEffect(() => {
-    localStorage.setItem('chatRooms', JSON.stringify(rooms));
     localStorage.setItem('chatRoomMessages', JSON.stringify(roomMessages));
     localStorage.setItem('chatCurrentRoom', currentRoom);
-  }, [rooms, roomMessages, currentRoom]);
+  }, [roomMessages, currentRoom]);
 
   const currentMessages = roomMessages[currentRoom] || [];
 
@@ -91,25 +89,29 @@ export default function ChatPage() {
     setCurrentRoom(roomName);
   };
 
-  const handleCreateRoom = () => {
-    if (newRoomName.trim() && !rooms.includes(newRoomName.trim())) {
-      const trimmedRoomName = newRoomName.trim();
-      setRooms((prevRooms) => [...prevRooms, trimmedRoomName]);
-      setRoomMessages((prevRoomMessages) => ({
-        ...prevRoomMessages,
-        [trimmedRoomName]: [],
-      }));
-      setCurrentRoom(trimmedRoomName);
-      setOpenCreateRoomDialog(false);
-      setNewRoomName('');
-    } else {
-      alert('ルーム名が無効か、すでに存在しています。');
+  // ルーム作成
+  const handleCreateRoom = async () => {
+    if (newRoomName.trim()) {
+      // API呼び出しが成功した場合にルーム一覧を再取得
+      const success = await createRoom(newRoomName.trim());
+      if (success) {
+        // APIから最新のルーム一覧を再取得
+        await fetchRooms();
+        // UIの状態をリセット
+        setOpenCreateRoomDialog(false);
+        setNewRoomName('');
+      } else {
+        // API呼び出しが失敗した場合はエラーハンドリング
+        alert('ルームの作成に失敗しました。');
+      }
     }
   };
 
   const handleDeleteRoom = () => {
     if (roomToDelete && roomToDelete !== 'General') {
-      setRooms((prevRooms) => prevRooms.filter((room) => room !== roomToDelete));
+      // ローカルのrooms stateを更新（APIからの更新に置き換えられるべき）
+      const updatedRooms = rooms.filter((room) => room.name !== roomToDelete);
+      // ローカルのroomMessagesを更新
       setRoomMessages((prevRoomMessages) => {
         const newRoomMessages = { ...prevRoomMessages };
         delete newRoomMessages[roomToDelete];
@@ -117,8 +119,8 @@ export default function ChatPage() {
       });
 
       if (currentRoom === roomToDelete) {
-        const remainingRooms = rooms.filter((room) => room !== roomToDelete);
-        setCurrentRoom(remainingRooms.length > 0 ? remainingRooms[0] : 'General');
+        const remainingRooms = updatedRooms;
+        setCurrentRoom(remainingRooms.length > 0 ? remainingRooms[0].name : 'General');
       }
     } else if (roomToDelete === 'General') {
       alert("「General」ルームは削除できません。");
@@ -127,11 +129,14 @@ export default function ChatPage() {
     setRoomToDelete(null);
   };
 
+  // ChatHeaderに渡すルーム一覧を、フックから取得したオブジェクトの配列に変換
+  const roomNames = rooms.map(room => room.name);
+
   return (
     <>
       <ChatHeader
         currentRoom={currentRoom}
-        rooms={rooms}
+        rooms={roomNames}
         onRoomChange={handleRoomChange}
         onOpenCreateRoomDialog={() => setOpenCreateRoomDialog(true)}
         onOpenDeleteConfirmDialog={(roomName) => {
@@ -154,7 +159,7 @@ export default function ChatPage() {
             setOpenDeleteConfirmDialog(false);
             setRoomToDelete(null);
           },
-          value: roomToDelete || '', 
+          value: roomToDelete || '',
           onDelete: handleDeleteRoom,
         }}
       />
