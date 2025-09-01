@@ -4,14 +4,14 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Message } from '../../types/index';
 import { ChatTemplate } from '@/components/templates/ChatTemplate';
 import { ChatHeader } from '@/components/organisms/ChatHeader';
-import { useCreateRoom, useFetchRooms } from '@/hooks/useRooms';
+import { useCreateRoom, useFetchRooms, useDeleteRoom } from '@/hooks/useRooms';
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
   const [openCreateRoomDialog, setOpenCreateRoomDialog] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<{ id: number; name: string } | null>(null);
   const [currentRoom, setCurrentRoom] = useState<string>('General');
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
@@ -20,11 +20,23 @@ export default function ChatPage() {
   // 新しいカスタムフックを使用してルームの作成と取得を処理
   const { createRoom } = useCreateRoom();
   const { rooms, fetchRooms } = useFetchRooms();
+  const { deleteRoom } = useDeleteRoom();
 
   // コンポーネントの初回ロード時にルーム一覧をAPIから取得
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
+
+  // ルーム一覧が更新されたときに、現在のルームがまだ存在するか確認する
+  useEffect(() => {
+    if (rooms.length > 0) {
+      const currentRoomExists = rooms.some(room => room.name === currentRoom);
+      if (!currentRoomExists) {
+        // 存在しない場合、最初のルームに切り替える
+        setCurrentRoom(rooms[0].name);
+      }
+    }
+  }, [rooms, currentRoom]);
 
   // ユーザー名を管理するロジック（localStorageを使用）
   useEffect(() => {
@@ -92,37 +104,34 @@ export default function ChatPage() {
   // ルーム作成
   const handleCreateRoom = async () => {
     if (newRoomName.trim()) {
-      // API呼び出しが成功した場合にルーム一覧を再取得
       const success = await createRoom(newRoomName.trim());
       if (success) {
-        // APIから最新のルーム一覧を再取得
         await fetchRooms();
-        // UIの状態をリセット
         setOpenCreateRoomDialog(false);
         setNewRoomName('');
       } else {
-        // API呼び出しが失敗した場合はエラーハンドリング
         alert('ルームの作成に失敗しました。');
       }
     }
   };
 
-  const handleDeleteRoom = () => {
-    if (roomToDelete && roomToDelete !== 'General') {
-      // ローカルのrooms stateを更新（APIからの更新に置き換えられるべき）
-      const updatedRooms = rooms.filter((room) => room.name !== roomToDelete);
-      // ローカルのroomMessagesを更新
-      setRoomMessages((prevRoomMessages) => {
-        const newRoomMessages = { ...prevRoomMessages };
-        delete newRoomMessages[roomToDelete];
-        return newRoomMessages;
-      });
-
-      if (currentRoom === roomToDelete) {
-        const remainingRooms = updatedRooms;
-        setCurrentRoom(remainingRooms.length > 0 ? remainingRooms[0].name : 'General');
+  // ルーム削除ロジックをAPI呼び出しに変更
+  const handleDeleteRoom = async () => {
+    if (roomToDelete && roomToDelete.name !== 'General') {
+      const success = await deleteRoom(roomToDelete.id);
+      if (success) {
+        // 成功した場合、ルーム一覧を再取得
+        await fetchRooms();
+        // ローカルのroomMessagesを更新
+        setRoomMessages((prevRoomMessages) => {
+          const newRoomMessages = { ...prevRoomMessages };
+          delete newRoomMessages[roomToDelete.name];
+          return newRoomMessages;
+        });
+      } else {
+        alert('ルームの削除に失敗しました。');
       }
-    } else if (roomToDelete === 'General') {
+    } else if (roomToDelete && roomToDelete.name === 'General') {
       alert("「General」ルームは削除できません。");
     }
     setOpenDeleteConfirmDialog(false);
@@ -131,6 +140,7 @@ export default function ChatPage() {
 
   // ChatHeaderに渡すルーム一覧を、フックから取得したオブジェクトの配列に変換
   const roomNames = rooms.map(room => room.name);
+  const getRoomByName = (roomName: string) => rooms.find(room => room.name === roomName);
 
   return (
     <>
@@ -140,8 +150,11 @@ export default function ChatPage() {
         onRoomChange={handleRoomChange}
         onOpenCreateRoomDialog={() => setOpenCreateRoomDialog(true)}
         onOpenDeleteConfirmDialog={(roomName) => {
-          setRoomToDelete(roomName);
-          setOpenDeleteConfirmDialog(true);
+          const room = getRoomByName(roomName);
+          if (room) {
+            setRoomToDelete(room);
+            setOpenDeleteConfirmDialog(true);
+          }
         }}
         createRoomDialogProps={{
           open: openCreateRoomDialog,
@@ -159,7 +172,7 @@ export default function ChatPage() {
             setOpenDeleteConfirmDialog(false);
             setRoomToDelete(null);
           },
-          value: roomToDelete || '',
+          value: roomToDelete?.name || '',
           onDelete: handleDeleteRoom,
         }}
       />
