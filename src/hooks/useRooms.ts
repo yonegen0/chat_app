@@ -91,3 +91,42 @@ export const useFetchRooms = () => {
 
   return { fetchRooms, rooms, loading, error };
 };
+
+/**
+ * ルーム削除API (DELETE /rooms/{roomId}) を呼び出すためのフック。
+ */
+export const useDeleteRoom = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * ルームを削除するAPIを呼び出す非同期関数。
+   *
+   * @param {number} roomId 削除するルームのID。
+   * @returns {Promise<boolean>} 削除が成功した場合はtrue、失敗した場合はfalseを返します。
+   */
+  const deleteRoom = async (roomId: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${WEB_API_URL}/rooms/${roomId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'ルームの削除に失敗しました。');
+      }
+
+      return true;
+    } catch (e: any) {
+      setError(e.message || '不明なエラーが発生しました。');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteRoom, loading, error };
+};
