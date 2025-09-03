@@ -4,7 +4,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Message } from '../../types/index';
 import { ChatTemplate } from '@/components/templates/ChatTemplate';
 import { ChatHeader } from '@/components/organisms/ChatHeader';
-import { useCreateRoom, useFetchRooms, useDeleteRoom } from '@/hooks/useRooms';
+import { useCreateRoom, useFetchRooms, useDeleteRoom, useUserApi } from '@/hooks/useRooms';
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
@@ -15,7 +15,9 @@ export default function ChatPage() {
   const [currentRoom, setCurrentRoom] = useState<string>('General');
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
-  const [username, setUsername] = useState<string>('');
+  
+  // ユーザー名を管理するロジックをAPI経由に変更
+  const { username } = useUserApi();
 
   // 新しいカスタムフックを使用してルームの作成と取得を処理
   const { createRoom } = useCreateRoom();
@@ -38,18 +40,8 @@ export default function ChatPage() {
     }
   }, [rooms, currentRoom]);
 
-  // ユーザー名を管理するロジック（localStorageを使用）
+  // ルームメッセージと現在のルームをlocalStorageから読み込む
   useEffect(() => {
-    const storedUser = localStorage.getItem('chatUsername');
-    if (storedUser) {
-      setUsername(storedUser);
-    } else {
-      const randomName = `Guest_${Math.floor(Math.random() * 10000)}`;
-      setUsername(randomName);
-      localStorage.setItem('chatUsername', randomName);
-    }
-
-    // ルームメッセージと現在のルームをlocalStorageから読み込む
     const storedRoomMessages = localStorage.getItem('chatRoomMessages');
     const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
 
@@ -93,8 +85,7 @@ export default function ChatPage() {
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
-    localStorage.setItem('chatUsername', e.target.value);
+    // ユーザー名変更処理
   };
 
   const handleRoomChange = (roomName: string) => {

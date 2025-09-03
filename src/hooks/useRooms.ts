@@ -1,56 +1,98 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // バックエンドのbaseurl
 const WEB_API_URL = 'http://127.0.0.1:5000';
 
 /**
+ * ユーザー名をAPI経由で管理するためのフック。
+ * 初回ロード時にユーザー名をAPIから取得または作成し、
+ * ユーザー名変更をAPIに送信します。
+ */
+export const useUserApi = () => {
+  const [username, setUsernameState] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ユーザーIDを取得または作成するヘルパー関数
+  const getUserId = () => {
+    let userId = localStorage.getItem('chatUserId');
+    if (!userId) {
+      userId = `user_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('chatUserId', userId);
+    }
+    return userId;
+  };
+
+  // 初回ロード時にユーザー名を取得または作成
+  useEffect(() => {
+    const fetchOrCreateUser = async () => {
+      setLoading(true);
+      setError(null);
+      const userId = getUserId();
+      try {
+        // APIからユーザー情報を取得
+        const response = await fetch(`${WEB_API_URL}/users/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUsernameState(data.name);
+        } else {
+          // ユーザーが存在しない場合は新規作成
+          const newUsername = `Guest_${Math.floor(Math.random() * 10000)}`;
+          const createResponse = await fetch(`${WEB_API_URL}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: userId, name: newUsername }),
+          });
+          if (createResponse.ok) {
+            setUsernameState(newUsername);
+          } else {
+            throw new Error('ユーザーの作成に失敗しました。');
+          }
+        }
+      } catch (e: any) {
+        setError(e.message || 'ユーザー情報の取得/作成中に不明なエラーが発生しました。');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrCreateUser();
+  }, []);
+
+  return { username, loading, error };
+};
+
+/**
  * ルーム作成API (POST /addRooms) を呼び出すためのフック。
  */
 export const useCreateRoom = () => {
-  // API呼び出しの状態を管理するためのstate
   const [loading, setLoading] = useState<boolean>(false);
-  // エラーメッセージを管理するためのstate
   const [error, setError] = useState<string | null>(null);
-  // 作成されたルームのデータを管理するためのstate
   const [room, setRoom] = useState<{ id: number; name: string } | null>(null);
-
-  /**
-   * 新しいルームを作成するためにAPIを呼び出す非同期関数。
-   *
-   * @param {string} roomName 作成するルームの名前。
-   * @returns {Promise<boolean>} ルーム作成が成功した場合はtrue、失敗した場合はfalseを返します。
-   */
   const createRoom = async (roomName: string): Promise<boolean> => {
-    setLoading(true); // ローディングを開始
-    setError(null);    // エラーをリセット
-    setRoom(null);     // ルームデータをリセット
-
+    setLoading(true);
+    setError(null);
+    setRoom(null);
     try {
-      // APIエンドポイントのURL
       const response = await fetch(`${WEB_API_URL}/addRooms`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: roomName }), // ルーム名をJSON形式で送信
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: roomName }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'ルームの作成に失敗しました。');
       }
-
       const data = await response.json();
-      setRoom(data.room); // 成功した場合、ルームデータをセット
-      return true; // 成功
+      setRoom(data.room);
+      return true;
     } catch (e: any) {
-      setError(e.message || '不明なエラーが発生しました。'); // エラーメッセージをセット
-      return false; // 失敗
+      setError(e.message || '不明なエラーが発生しました。');
+      return false;
     } finally {
-      setLoading(false); // ローディングを終了
+      setLoading(false);
     }
   };
-
   return { createRoom, loading, error, room };
 };
 
@@ -58,37 +100,26 @@ export const useCreateRoom = () => {
  * ルーム一覧取得API (GET /rooms) を呼び出すためのフック。
  */
 export const useFetchRooms = () => {
-  // API呼び出しの状態を管理するためのstate
   const [loading, setLoading] = useState<boolean>(false);
-  // エラーメッセージを管理するためのstate
   const [error, setError] = useState<string | null>(null);
-  // 取得したルームのリストを管理するためのstate
   const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
-
-  /**
-   * ルーム一覧を取得するためにAPIを呼び出す非同期関数。
-   */
   const fetchRooms = async (): Promise<void> => {
-    setLoading(true); // ローディングを開始
-    setError(null);    // エラーをリセット
-    
+    setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`${WEB_API_URL}/rooms`);
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'ルーム一覧の取得に失敗しました。');
       }
-
       const data = await response.json();
-      setRooms(data.rooms); 
+      setRooms(data.rooms);
     } catch (e: any) {
-      setError(e.message || '不明なエラーが発生しました。'); // エラーメッセージをセット
+      setError(e.message || '不明なエラーが発生しました。');
     } finally {
-      setLoading(false); // ローディングを終了
+      setLoading(false);
     }
   };
-
   return { fetchRooms, rooms, loading, error };
 };
 
@@ -98,27 +129,17 @@ export const useFetchRooms = () => {
 export const useDeleteRoom = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * ルームを削除するAPIを呼び出す非同期関数。
-   *
-   * @param {number} roomId 削除するルームのID。
-   * @returns {Promise<boolean>} 削除が成功した場合はtrue、失敗した場合はfalseを返します。
-   */
   const deleteRoom = async (roomId: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
-
     try {
       const response = await fetch(`${WEB_API_URL}/rooms/${roomId}`, {
         method: 'DELETE',
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'ルームの削除に失敗しました。');
       }
-
       return true;
     } catch (e: any) {
       setError(e.message || '不明なエラーが発生しました。');
@@ -127,6 +148,5 @@ export const useDeleteRoom = () => {
       setLoading(false);
     }
   };
-
   return { deleteRoom, loading, error };
 };
