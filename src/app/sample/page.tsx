@@ -17,7 +17,7 @@ export default function ChatPage() {
   const [messageInput, setMessageInput] = useState('');
   
   // ユーザー名を管理するロジックをAPI経由に変更
-  const { username } = useUserApi();
+  const { username, setUsername } = useUserApi();
 
   // 新しいカスタムフックを使用してルームの作成と取得を処理
   const { createRoom } = useCreateRoom();
@@ -85,7 +85,7 @@ export default function ChatPage() {
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // ユーザー名変更処理
+    setUsername(e.target.value);
   };
 
   const handleRoomChange = (roomName: string) => {

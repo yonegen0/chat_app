@@ -59,7 +59,28 @@ export const useUserApi = () => {
     fetchOrCreateUser();
   }, []);
 
-  return { username, loading, error };
+  // ユーザー名を変更するロジック
+  const setUsername = async (newUsername: string) => {
+    const userId = getUserId();
+    setUsernameState(newUsername);
+    try {
+      // APIにユーザー名の変更を送信
+      const response = await fetch(`${WEB_API_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newUsername }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'ユーザー名の変更に失敗しました。');
+      }
+    } catch (e: any) {
+      console.error('ユーザー名の更新に失敗しました:', e);
+      // エラーが発生した場合でも、UI上は変更後のユーザー名を表示
+    }
+  };
+
+  return { username, setUsername, loading, error };
 };
 
 /**
