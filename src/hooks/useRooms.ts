@@ -6,45 +6,48 @@ const WEB_API_URL = 'http://127.0.0.1:5000';
 /**
  * ユーザー名をAPI経由で管理するためのフック。
  * 初回ロード時にユーザー名をAPIから取得または作成し、
- * ユーザー名変更をAPIに送信します。
+ * ユーザーID（int）を状態として保持します。
  */
 export const useUserApi = () => {
   const [username, setUsernameState] = useState<string>('');
+  const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ユーザーIDを取得または作成するヘルパー関数
-  const getUserId = () => {
-    let userId = localStorage.getItem('chatUserId');
-    if (!userId) {
-      userId = `user_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('chatUserId', userId);
+  // ユーザー名をLocalStorageから取得・生成
+  const getUsernameFromLocalStorage = () => {
+    let storedUsername = localStorage.getItem('chatUsername');
+    if (!storedUsername) {
+      storedUsername = `Guest_${Math.floor(Math.random() * 10000)}`;
+      localStorage.setItem('chatUsername', storedUsername);
     }
-    return userId;
+    return storedUsername;
   };
 
-  // 初回ロード時にユーザー名を取得または作成
+  // 初回ロード時にユーザー名とIDを取得または作成
   useEffect(() => {
     const fetchOrCreateUser = async () => {
       setLoading(true);
       setError(null);
-      const userId = getUserId();
+      const currentUsername = getUsernameFromLocalStorage();
       try {
         // APIからユーザー情報を取得
-        const response = await fetch(`${WEB_API_URL}/users/${userId}`);
+        const response = await fetch(`${WEB_API_URL}/users/${currentUsername}`);
         if (response.ok) {
           const data = await response.json();
           setUsernameState(data.name);
+          setUserId(data.id);
         } else {
           // ユーザーが存在しない場合は新規作成
-          const newUsername = `Guest_${Math.floor(Math.random() * 10000)}`;
           const createResponse = await fetch(`${WEB_API_URL}/users`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId, name: newUsername }),
+            body: JSON.stringify({ name: currentUsername }),
           });
           if (createResponse.ok) {
-            setUsernameState(newUsername);
+            const data = await createResponse.json();
+            setUsernameState(data.name);
+            setUserId(data.id);
           } else {
             throw new Error('ユーザーの作成に失敗しました。');
           }
@@ -61,11 +64,12 @@ export const useUserApi = () => {
 
   // ユーザー名を変更するロジック
   const setUsername = async (newUsername: string) => {
-    const userId = getUserId();
+    const oldUsername = getUsernameFromLocalStorage();
     setUsernameState(newUsername);
+    localStorage.setItem('chatUsername', newUsername);
     try {
       // APIにユーザー名の変更を送信
-      const response = await fetch(`${WEB_API_URL}/users/${userId}`, {
+      const response = await fetch(`${WEB_API_URL}/users/${oldUsername}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newUsername }),
@@ -80,7 +84,39 @@ export const useUserApi = () => {
     }
   };
 
-  return { username, setUsername, loading, error };
+  return { username, setUsername, userId, loading, error };
+};
+
+/**
+ * メッセージ送信API (POST /messages) を呼び出すためのフック。
+ */
+export const useMessages = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sendMessage = async (userId: number, roomId: number, messageText: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${WEB_API_URL}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, roomId, message_text: messageText }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'メッセージの送信に失敗しました。');
+      }
+      return true;
+    } catch (e: any) {
+      setError(e.message || '不明なエラーが発生しました。');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { sendMessage, loading, error };
 };
 
 /**

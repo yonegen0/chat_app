@@ -4,7 +4,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Message } from '../../types/index';
 import { ChatTemplate } from '@/components/templates/ChatTemplate';
 import { ChatHeader } from '@/components/organisms/ChatHeader';
-import { useCreateRoom, useFetchRooms, useDeleteRoom, useUserApi } from '@/hooks/useRooms';
+import { useCreateRoom, useFetchRooms, useDeleteRoom, useUserApi, useMessages } from '@/hooks/useRooms';
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
@@ -16,10 +16,11 @@ export default function ChatPage() {
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
   
-  // ユーザー名を管理するロジックをAPI経由に変更
-  const { username, setUsername } = useUserApi();
-
-  // 新しいカスタムフックを使用してルームの作成と取得を処理
+  // ユーザー情報を管理するロジック
+  const { username, setUsername, userId } = useUserApi();
+  // メッセージ送信を管理するロジック
+  const { sendMessage } = useMessages();
+  // ルームの作成、取得、削除を管理するロジック
   const { createRoom } = useCreateRoom();
   const { rooms, fetchRooms } = useFetchRooms();
   const { deleteRoom } = useDeleteRoom();
@@ -41,6 +42,8 @@ export default function ChatPage() {
   }, [rooms, currentRoom]);
 
   // ルームメッセージと現在のルームをlocalStorageから読み込む
+  // NOTE: 現在、メッセージはバックエンドに保存されていません。
+  // そのため、ページをリロードするとメッセージが失われます。
   useEffect(() => {
     const storedRoomMessages = localStorage.getItem('chatRoomMessages');
     const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
@@ -60,6 +63,7 @@ export default function ChatPage() {
   }, []);
 
   // ルームメッセージと現在のルームをlocalStorageに保存するロジック
+  // NOTE: この実装は、一時的なメッセージのキャッシュとして機能します。
   useEffect(() => {
     localStorage.setItem('chatRoomMessages', JSON.stringify(roomMessages));
     localStorage.setItem('chatCurrentRoom', currentRoom);
@@ -67,20 +71,29 @@ export default function ChatPage() {
 
   const currentMessages = roomMessages[currentRoom] || [];
 
-  const handleSendMessage = (e: FormEvent) => {
+  const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
-    if (messageInput.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: messageInput.trim(),
-        user: username,
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setRoomMessages((prevRoomMessages) => ({
-        ...prevRoomMessages,
-        [currentRoom]: [...(prevRoomMessages[currentRoom] || []), newMessage],
-      }));
-      setMessageInput('');
+    const currentRoomData = rooms.find(room => room.name === currentRoom);
+
+    if (messageInput.trim() && userId !== null && currentRoomData) {
+      // API経由でメッセージを送信
+      const success = await sendMessage(userId, currentRoomData.id, messageInput.trim());
+      if (success) {
+        // 送信が成功した場合、ローカルの状態を更新
+        const newMessage: Message = {
+          id: Date.now().toString(),
+          text: messageInput.trim(),
+          user: username,
+          timestamp: new Date().toLocaleTimeString(),
+        };
+        setRoomMessages((prevRoomMessages) => ({
+          ...prevRoomMessages,
+          [currentRoom]: [...(prevRoomMessages[currentRoom] || []), newMessage],
+        }));
+        setMessageInput('');
+      } else {
+        alert('メッセージの送信に失敗しました。');
+      }
     }
   };
 
