@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Room } from '@/types/index';
 
 // バックエンドのbaseurl
 const WEB_API_URL = 'http://127.0.0.1:5000';
@@ -125,7 +126,7 @@ export const useMessages = () => {
 export const useCreateRoom = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [room, setRoom] = useState<{ id: number; name: string } | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
   const createRoom = async (roomName: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -133,7 +134,6 @@ export const useCreateRoom = () => {
     try {
       const response = await fetch(`${WEB_API_URL}/addRooms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: roomName }),
       });
       if (!response.ok) {
@@ -159,7 +159,7 @@ export const useCreateRoom = () => {
 export const useFetchRooms = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const fetchRooms = async (): Promise<void> => {
     setLoading(true);
     setError(null);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
-import { Message } from '../../types/index';
+import { Message, Room } from '@/types/index';
 import { ChatTemplate } from '@/components/templates/ChatTemplate';
 import { ChatHeader } from '@/components/organisms/ChatHeader';
 import { useCreateRoom, useFetchRooms, useDeleteRoom, useUserApi, useMessages } from '@/hooks/useRooms';
@@ -11,7 +11,7 @@ export default function ChatPage() {
   const [openCreateRoomDialog, setOpenCreateRoomDialog] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
   const [currentRoom, setCurrentRoom] = useState<string>('General');
   const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
