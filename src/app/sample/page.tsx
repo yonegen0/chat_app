@@ -13,13 +13,12 @@ export default function ChatPage() {
   const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
   const [currentRoom, setCurrentRoom] = useState<string>('General');
-  const [roomMessages, setRoomMessages] = useState<{ [key: string]: Message[] }>({});
   const [messageInput, setMessageInput] = useState('');
   
   // ユーザー情報を管理するロジック
   const { username, setUsername, userId } = useUserApi();
-  // メッセージ送信を管理するロジック
-  const { sendMessage } = useMessages();
+  // メッセージ送信と取得を管理するロジック
+  const { sendMessage, messages, fetchMessages } = useMessages();
   // ルームの作成、取得、削除を管理するロジック
   const { createRoom } = useCreateRoom();
   const { rooms, fetchRooms } = useFetchRooms();
@@ -41,35 +40,13 @@ export default function ChatPage() {
     }
   }, [rooms, currentRoom]);
 
-  // ルームメッセージと現在のルームをlocalStorageから読み込む
-  // NOTE: 現在、メッセージはバックエンドに保存されていません。
-  // そのため、ページをリロードするとメッセージが失われます。
+  // 新しいルームが選択されたときにメッセージを再取得
   useEffect(() => {
-    const storedRoomMessages = localStorage.getItem('chatRoomMessages');
-    const storedCurrentRoom = localStorage.getItem('chatCurrentRoom');
-
-    let initialRoomMessages: { [key: string]: Message[] } = { 'General': [] };
-    let initialCurrentRoom: string = 'General';
-
-    if (storedRoomMessages) {
-      initialRoomMessages = JSON.parse(storedRoomMessages);
+    const currentRoomData = rooms.find(room => room.name === currentRoom);
+    if (currentRoomData) {
+      fetchMessages(currentRoomData.id);
     }
-    if (storedCurrentRoom) {
-      initialCurrentRoom = storedCurrentRoom;
-    }
-
-    setRoomMessages(initialRoomMessages);
-    setCurrentRoom(initialCurrentRoom);
-  }, []);
-
-  // ルームメッセージと現在のルームをlocalStorageに保存するロジック
-  // NOTE: この実装は、一時的なメッセージのキャッシュとして機能します。
-  useEffect(() => {
-    localStorage.setItem('chatRoomMessages', JSON.stringify(roomMessages));
-    localStorage.setItem('chatCurrentRoom', currentRoom);
-  }, [roomMessages, currentRoom]);
-
-  const currentMessages = roomMessages[currentRoom] || [];
+  }, [currentRoom, rooms, fetchMessages]);
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
@@ -79,17 +56,8 @@ export default function ChatPage() {
       // API経由でメッセージを送信
       const success = await sendMessage(userId, currentRoomData.id, messageInput.trim());
       if (success) {
-        // 送信が成功した場合、ローカルの状態を更新
-        const newMessage: Message = {
-          id: Date.now().toString(),
-          text: messageInput.trim(),
-          user: username,
-          timestamp: new Date().toLocaleTimeString(),
-        };
-        setRoomMessages((prevRoomMessages) => ({
-          ...prevRoomMessages,
-          [currentRoom]: [...(prevRoomMessages[currentRoom] || []), newMessage],
-        }));
+        // 送信成功後にメッセージを再取得
+        await fetchMessages(currentRoomData.id);
         setMessageInput('');
       } else {
         alert('メッセージの送信に失敗しました。');
@@ -126,12 +94,6 @@ export default function ChatPage() {
       if (success) {
         // 成功した場合、ルーム一覧を再取得
         await fetchRooms();
-        // ローカルのroomMessagesを更新
-        setRoomMessages((prevRoomMessages) => {
-          const newRoomMessages = { ...prevRoomMessages };
-          delete newRoomMessages[roomToDelete.name];
-          return newRoomMessages;
-        });
       } else {
         alert('ルームの削除に失敗しました。');
       }
@@ -183,7 +145,7 @@ export default function ChatPage() {
       <ChatTemplate
         username={username}
         onUsernameChange={handleUsernameChange}
-        messages={currentMessages}
+        messages={messages}
         messageInput={messageInput}
         onMessageInputChange={(e) => setMessageInput(e.target.value)}
         onSendMessage={handleSendMessage}
