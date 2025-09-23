@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Room } from '@/types/index';
+import { Room, Message } from '@/types/index';
 
 // バックエンドのbaseurl
 const WEB_API_URL = 'http://127.0.0.1:5000';
@@ -89,9 +89,10 @@ export const useUserApi = () => {
 };
 
 /**
- * メッセージ送信API (POST /messages) を呼び出すためのフック。
+ * メッセージ送信・取得APIを呼び出すためのフック。
  */
 export const useMessages = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,8 +117,26 @@ export const useMessages = () => {
       setLoading(false);
     }
   };
+  
+  const fetchMessages = async (roomId: number): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${WEB_API_URL}/rooms/${roomId}/messages`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'メッセージの取得に失敗しました。');
+      }
+      const data = await response.json();
+      setMessages(data.messages);
+    } catch (e: any) {
+      setError(e.message || '不明なエラーが発生しました。');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return { sendMessage, loading, error };
+  return { sendMessage, messages, fetchMessages, loading, error };
 };
 
 /**
