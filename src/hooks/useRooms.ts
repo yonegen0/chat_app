@@ -150,9 +150,11 @@ export const useCreateRoom = () => {
     setLoading(true);
     setError(null);
     setRoom(null);
+    console.info('roomName:',roomName);
     try {
       const response = await fetch(`${WEB_API_URL}/addRooms`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: roomName }),
       });
       if (!response.ok) {

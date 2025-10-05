@@ -3,7 +3,9 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { ChatTemplate } from '../components/templates/ChatTemplate';
 import { Message } from '../types/index';
-import { Button, Divider, Paper, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import MenuIcon from "@mui/icons-material/Menu";
+import AddIcon from '@mui/icons-material/Add';
 
 // チャットアプリのページコンポーネント
 export default function ChatPage() {
@@ -44,20 +46,34 @@ export default function ChatPage() {
 
   return (
     <>
-    <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Typography variant="h6" component="h2" gutterBottom>
-        ルーム選択
-      </Typography>
-      <Button
-      type="submit"
-      variant="contained"
-      color="primary"
-      sx={{width:'10px'}}
-      >
-        +
-      </Button>
-      <Divider sx={{ mb: 2 }} />
-    </Paper>
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            チャットアプリ
+          </Typography>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+          >
+            <AddIcon />
+          </IconButton>
+          <Button color="inherit">Logout</Button>
+        </Toolbar>
+      </AppBar>
+    </Box>
     <ChatTemplate
       username={username}
       onUsernameChange={handleUsernameChange}
